@@ -10,52 +10,189 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @Query private var subscriptions: [Subscription]
+    @State private var selectedTab = 0
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        TabView(selection: $selectedTab) {
+            OverviewView(subscriptions: subscriptions)
+                .tabItem {
+                    Image(systemName: "creditcard.fill")
+                    Text("Overview")
                 }
-                .onDelete(perform: deleteItems)
+                .tag(0)
+            
+            Text("Reports")
+                .tabItem {
+                    Image(systemName: "chart.pie.fill")
+                    Text("Reports")
+                }
+                .tag(1)
+            
+            Text("Settings")
+                .tabItem {
+                    Image(systemName: "gear")
+                    Text("Settings")
+                }
+                .tag(2)
+        }
+        .tint(.purple)
+    }
+}
+
+struct OverviewView: View {
+    let subscriptions: [Subscription]
+    @Environment(\.modelContext) private var modelContext
+    @State private var currentDate = Date()
+    
+    var totalAmount: Double {
+        subscriptions.reduce(0) { $0 + $1.amount }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                //Color.black.ignoresSafeArea()
+                
+                VStack(spacing: 20) {
+                    // Overview Card
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("July")
+                                .font(.title2)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 8)
+                                .background(Color.purple.opacity(0.3))
+                                .cornerRadius(20)
+                            
+                            Spacer()
+                            
+                            Text("2025")
+                                .font(.title2)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Total")
+                                .font(.title3)
+                                .foregroundColor(.gray)
+                            
+                            Text("\(Int(totalAmount))")
+                                .font(.system(size: 50, weight: .bold))
+                            + Text(" USD")
+                                .font(.title2)
+                        }
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(20)
+                    
+                    // Upcoming Subscriptions
+                    VStack(alignment: .leading, spacing: 15) {
+                        Text("UPCOMING")
+                            .foregroundColor(.gray)
+                            .padding(.leading)
+                        
+                        ForEach(subscriptions) { subscription in
+                            ZStack {
+                                SubscriptionRow(subscription: subscription)
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    deleteSubscription(subscription)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                .tint(.red)
+                                
+                                Button {
+                                    archiveSubscription(subscription)
+                                } label: {
+                                    Label("Archive", systemImage: "archivebox")
+                                }
+                                .tint(.purple)
+                            }
+                        }
+                    }
+                    
+                    Spacer()
+                }
+                .padding()
             }
+            .navigationTitle("Overview")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {}) {
+                        Image(systemName: "line.3.horizontal")
+                            .foregroundColor(.purple)
+                    }
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: SubscriptionListView()) {
+                        Image(systemName: "plus")
+                            .foregroundColor(.purple)
                     }
                 }
             }
-        } detail: {
-            Text("Select an item")
         }
     }
-
-    private func addItem() {
+    
+    private func deleteSubscription(_ subscription: Subscription) {
         withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+            modelContext.delete(subscription)
         }
     }
+    
+    private func archiveSubscription(_ subscription: Subscription) {
+        // TODO: 實現歸檔功能
+        print("Archived subscription: \(subscription.name)")
+    }
+}
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+struct SubscriptionRow: View {
+    let subscription: Subscription
+    
+    var body: some View {
+        HStack {
+            Image(systemName: subscription.icon)
+                .font(.title2)
+                .frame(width: 40, height: 40)
+                .background(Color.purple.opacity(0.3))
+                .cornerRadius(10)
+            
+            VStack(alignment: .leading) {
+                Text(subscription.name)
+                    .font(.headline)
+                
+                Text(getDueText(date: subscription.dueDate))
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
             }
+            
+            Spacer()
+            
+            Text("\(Int(subscription.amount)) $")
+                .font(.headline)
+        }
+        .padding()
+        .background(Color.gray.opacity(0.2))
+        .cornerRadius(15)
+    }
+    
+    private func getDueText(date: Date) -> String {
+        if Calendar.current.isDateInToday(date) {
+            return "DUE TODAY"
+        } else if Calendar.current.isDateInTomorrow(date) {
+            return "DUE TOMORROW"
+        } else {
+            let days = Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0
+            return "DUE IN \(days) DAYS"
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: Subscription.self, inMemory: true)
 }

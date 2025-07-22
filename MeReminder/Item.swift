@@ -9,10 +9,16 @@ import Foundation
 import SwiftData
 
 @Model
-final class Item {
-    var timestamp: Date
+class Subscription {
+    var name: String
+    var amount: Double
+    var dueDate: Date
+    var icon: String
     
-    init(timestamp: Date) {
-        self.timestamp = timestamp
+    init(name: String, amount: Double, dueDate: Date, icon: String) {
+        self.name = name
+        self.amount = amount
+        self.dueDate = dueDate
+        self.icon = icon
     }
 }
