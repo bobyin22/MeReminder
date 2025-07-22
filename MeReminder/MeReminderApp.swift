@@ -34,30 +34,30 @@ struct MeReminderApp: App {
         .modelContainer(container)
     }
     
-    private func addSampleData() {
-        let duolingo = Subscription(
-            name: "Duolingo",
-            amount: 15,
-            dueDate: Date(),
-            icon: "graduationcap.fill"
-        )
-        
-        let netflix = Subscription(
-            name: "Netflix",
-            amount: 250,
-            dueDate: Calendar.current.date(byAdding: .day, value: 1, to: Date())!,
-            icon: "play.fill"
-        )
-        
-        let amazon = Subscription(
-            name: "Amazon",
-            amount: 2500,
-            dueDate: Calendar.current.date(byAdding: .day, value: 886, to: Date())!,
-            icon: "cart.fill"
-        )
-        
-        [duolingo, netflix, amazon].forEach { subscription in
-            container.mainContext.insert(subscription)
-        }
-    }
+//    private func addSampleData() {
+//        let duolingo = Subscription(
+//            name: "Duolingo",
+//            amount: 15,
+//            dueDate: Date(),
+//            icon: "graduationcap.fill"
+//        )
+//        
+//        let netflix = Subscription(
+//            name: "Netflix",
+//            amount: 250,
+//            dueDate: Calendar.current.date(byAdding: .day, value: 1, to: Date())!,
+//            icon: "play.fill"
+//        )
+//        
+//        let amazon = Subscription(
+//            name: "Amazon",
+//            amount: 2500,
+//            dueDate: Calendar.current.date(byAdding: .day, value: 886, to: Date())!,
+//            icon: "cart.fill"
+//        )
+//        
+//        [duolingo, netflix, amazon].forEach { subscription in
+//            container.mainContext.insert(subscription)
+//        }
+//    }
 }

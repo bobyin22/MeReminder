@@ -7,9 +7,11 @@ struct SubscriptionService: Identifiable {
 }
 
 struct SubscriptionListView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     @State private var selectedService: SubscriptionService?
     @State private var showingDetail = false
+    @Binding var selectedTab: Int
     
     let subscriptionServices: [SubscriptionService] = [
         SubscriptionService(name: "1Password", icon: Image(systemName: "lock.fill")),
@@ -32,8 +34,6 @@ struct SubscriptionListView: View {
     
     var body: some View {
         ZStack {
-            //Color.black.ignoresSafeArea()
-            
             VStack(spacing: 20) {
                 // Search Bar
                 HStack {
@@ -52,16 +52,14 @@ struct SubscriptionListView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(filteredServices) { service in
-                            NavigationLink(destination: SubscriptionDetailView(service: service)) {
+                            NavigationLink(destination: SubscriptionDetailView(service: service, selectedTab: $selectedTab)) {
                                 HStack {
                                     service.icon
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 30, height: 30)
-                                        //.foregroundColor(.purple)
                                     
                                     Text(service.name)
-                                        //.foregroundColor(.black)
                                         .font(.title3)
                                     
                                     Spacer()
@@ -77,5 +75,10 @@ struct SubscriptionListView: View {
         }
         .navigationTitle("Add Subscription")
         .navigationBarTitleDisplayMode(.large)
+        .onChange(of: selectedTab) { newValue in
+            if newValue == 0 {
+                dismiss()
+            }
+        }
     }
 } 

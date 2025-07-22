@@ -4,7 +4,10 @@ struct SubscriptionDetailView: View {
     let service: SubscriptionService
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
+    @Environment(\.presentationMode) private var presentationMode
+    @Binding var selectedTab: Int  // 新增這行
+
+
     @State private var amount: Double = 0
     @State private var billingDate = Date()
     @State private var endDate: Date?
@@ -149,10 +152,22 @@ struct SubscriptionDetailView: View {
             name: service.name,
             amount: amount,
             dueDate: billingDate,
-            icon: "dollarsign.circle.fill" // 這裡可以根據實際需求修改
+            icon: category.icon
         )
         modelContext.insert(newSubscription)
+        try? modelContext.save()
+        
+        // 設置回到 Overview tab
+        selectedTab = 0
+        
+        // 關閉所有導航視圖
         dismiss()
+        presentationMode.wrappedValue.dismiss()
+        
+        // 使用 DispatchQueue 確保所有視圖都被關閉
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            dismiss()
+        }
     }
 }
 

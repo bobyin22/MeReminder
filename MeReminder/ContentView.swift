@@ -12,10 +12,12 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var subscriptions: [Subscription]
     @State private var selectedTab = 0
-    
+    @State private var showingDeleteAlert = false
+    @State private var subscriptionToDelete: Subscription?
+
     var body: some View {
         TabView(selection: $selectedTab) {
-            OverviewView(subscriptions: subscriptions)
+            OverviewView(subscriptions: subscriptions, selectedTab: $selectedTab)
                 .tabItem {
                     Image(systemName: "creditcard.fill")
                     Text("Overview")
@@ -42,8 +44,11 @@ struct ContentView: View {
 
 struct OverviewView: View {
     let subscriptions: [Subscription]
+    @Binding var selectedTab: Int
     @Environment(\.modelContext) private var modelContext
     @State private var currentDate = Date()
+    @State private var showingDeleteAlert = false
+    @State private var subscriptionToDelete: Subscription?
     
     var totalAmount: Double {
         subscriptions.reduce(0) { $0 + $1.amount }
@@ -51,9 +56,7 @@ struct OverviewView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                //Color.black.ignoresSafeArea()
-                
+            ScrollView {
                 VStack(spacing: 20) {
                     // Overview Card
                     VStack(alignment: .leading, spacing: 10) {
@@ -93,28 +96,17 @@ struct OverviewView: View {
                             .padding(.leading)
                         
                         ForEach(subscriptions) { subscription in
-                            ZStack {
-                                SubscriptionRow(subscription: subscription)
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    deleteSubscription(subscription)
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
+                            SubscriptionRow(subscription: subscription)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        subscriptionToDelete = subscription
+                                        showingDeleteAlert = true
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
                                 }
-                                .tint(.red)
-                                
-                                Button {
-                                    archiveSubscription(subscription)
-                                } label: {
-                                    Label("Archive", systemImage: "archivebox")
-                                }
-                                .tint(.purple)
-                            }
                         }
                     }
-                    
-                    Spacer()
                 }
                 .padding()
             }
@@ -129,11 +121,21 @@ struct OverviewView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: SubscriptionListView()) {
+                    NavigationLink(destination: SubscriptionListView(selectedTab: $selectedTab)) {
                         Image(systemName: "plus")
                             .foregroundColor(.purple)
                     }
                 }
+            }
+            .alert("確認刪除", isPresented: $showingDeleteAlert) {
+                Button("取消", role: .cancel) {}
+                Button("刪除", role: .destructive) {
+                    if let subscription = subscriptionToDelete {
+                        deleteSubscription(subscription)
+                    }
+                }
+            } message: {
+                Text("確定要刪除這個訂閱嗎？此操作無法復原。")
             }
         }
     }
