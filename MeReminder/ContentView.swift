@@ -90,22 +90,32 @@ struct OverviewView: View {
                     .cornerRadius(20)
                     
                     // Upcoming Subscriptions
-                    VStack(alignment: .leading, spacing: 15) {
+                    VStack(alignment: .leading) {
                         Text("UPCOMING")
                             .foregroundColor(.gray)
                             .padding(.leading)
+                            .padding(.bottom, 5)
                         
-                        ForEach(subscriptions) { subscription in
-                            SubscriptionRow(subscription: subscription)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                    Button(role: .destructive) {
-                                        subscriptionToDelete = subscription
-                                        showingDeleteAlert = true
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
+                        List {
+                            ForEach(subscriptions) { subscription in
+                                SubscriptionRow(subscription: subscription)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                                    .listRowBackground(Color.clear)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            subscriptionToDelete = subscription
+                                            showingDeleteAlert = true
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
                                     }
-                                }
+                            }
                         }
+                        .listStyle(PlainListStyle())
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
+                        .frame(height: CGFloat(subscriptions.count * 90))  // 設定 List 的高度
                     }
                 }
                 .padding()
@@ -143,6 +153,7 @@ struct OverviewView: View {
     private func deleteSubscription(_ subscription: Subscription) {
         withAnimation {
             modelContext.delete(subscription)
+            try? modelContext.save()
         }
     }
     
@@ -180,6 +191,7 @@ struct SubscriptionRow: View {
         .padding()
         .background(Color.gray.opacity(0.2))
         .cornerRadius(15)
+        .padding(.vertical, 4)  // 加入垂直間距
     }
     
     private func getDueText(date: Date) -> String {
