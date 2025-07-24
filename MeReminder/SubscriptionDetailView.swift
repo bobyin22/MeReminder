@@ -160,14 +160,11 @@ struct SubscriptionDetailView: View {
         // 設置回到 Overview tab
         selectedTab = 0
         
-        // 關閉所有導航視圖
-        dismiss()
-        presentationMode.wrappedValue.dismiss()
+        // 發送通知以關閉所有視圖
+        NotificationCenter.default.post(name: Notification.Name("DismissToRoot"), object: nil)
         
-        // 使用 DispatchQueue 確保所有視圖都被關閉
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            dismiss()
-        }
+        // 關閉當前視圖
+        dismiss()
     }
 }
 

@@ -9,9 +9,9 @@ struct SubscriptionService: Identifiable {
 struct SubscriptionListView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
-    @State private var selectedService: SubscriptionService?
-    @State private var showingDetail = false
     @Binding var selectedTab: Int
+    @State private var showingDetail = false
+    @State private var selectedService: SubscriptionService?
     
     let subscriptionServices: [SubscriptionService] = [
         SubscriptionService(name: "1Password", icon: Image(systemName: "lock.fill")),
@@ -33,52 +33,68 @@ struct SubscriptionListView: View {
     }
     
     var body: some View {
-        ZStack {
-            VStack(spacing: 20) {
-                // Search Bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    
-                    TextField("Search", text: $searchText)
-                        .textFieldStyle(.plain)
-                }
-                .padding()
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(15)
-                .padding(.horizontal)
+        VStack(spacing: 0) {
+            // Search Bar
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.gray)
                 
-                // Subscription List
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(filteredServices) { service in
-                            NavigationLink(destination: SubscriptionDetailView(service: service, selectedTab: $selectedTab)) {
-                                HStack {
-                                    service.icon
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 30, height: 30)
-                                    
-                                    Text(service.name)
-                                        .font(.title3)
-                                    
-                                    Spacer()
-                                }
-                                .padding()
+                TextField("Search", text: $searchText)
+                    .textFieldStyle(.plain)
+            }
+            .padding()
+            .background(Color.gray.opacity(0.2))
+            .cornerRadius(15)
+            .padding()
+            
+            // Subscription List
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(filteredServices) { service in
+                        Button {
+                            selectedService = service
+                            showingDetail = true
+                        } label: {
+                            HStack {
+                                service.icon
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 30, height: 30)
+                                    .foregroundColor(.purple)
+                                
+                                Text(service.name)
+                                    .font(.title3)
+                                    .foregroundColor(.primary)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
                             }
-                            Divider()
-                                .background(Color.gray.opacity(0.3))
+                            .padding()
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
                         }
+                        
+                        Divider()
+                            .padding(.horizontal)
                     }
                 }
             }
         }
         .navigationTitle("Add Subscription")
         .navigationBarTitleDisplayMode(.large)
-        .onChange(of: selectedTab) { newValue in
-            if newValue == 0 {
-                dismiss()
+        .sheet(isPresented: $showingDetail) {
+            if let service = selectedService {
+                NavigationStack {
+                    SubscriptionDetailView(service: service, selectedTab: $selectedTab)
+                }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DismissToRoot"))) { _ in
+            showingDetail = false
+            dismiss()
         }
     }
 } 
