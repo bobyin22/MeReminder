@@ -10,27 +10,24 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var subscriptions: [Subscription]
     @State private var selectedTab = 0
-    @State private var showingDeleteAlert = false
-    @State private var subscriptionToDelete: Subscription?
-
+    
     var body: some View {
         TabView(selection: $selectedTab) {
-            OverviewView(subscriptions: subscriptions, selectedTab: $selectedTab)
+            OverviewView(selectedTab: $selectedTab)
                 .tabItem {
                     Image(systemName: "creditcard.fill")
                     Text("Overview")
                 }
                 .tag(0)
-
+            
             Text("Reports")
                 .tabItem {
                     Image(systemName: "chart.pie.fill")
                     Text("Reports")
                 }
                 .tag(1)
-
+            
             Text("Settings")
                 .tabItem {
                     Image(systemName: "gear")
@@ -43,7 +40,7 @@ struct ContentView: View {
 }
 
 struct OverviewView: View {
-    let subscriptions: [Subscription]
+    @Query private var subscriptions: [Subscription]
     @Binding var selectedTab: Int
     @Environment(\.modelContext) private var modelContext
     @State private var currentDate = Date()
@@ -100,23 +97,26 @@ struct OverviewView: View {
                     
                     List {
                         ForEach(subscriptions) { subscription in
-                            SubscriptionRow(subscription: subscription)
-                                .listRowSeparator(.hidden)
-                                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                                .listRowBackground(Color.clear)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                    Button {
-                                        subscriptionToDelete = subscription
-                                        showingDeleteAlert = true
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                    .tint(.red)
-                                }
-                                .onTapGesture {
+                            Button {
+                                withAnimation {
                                     selectedSubscription = subscription
                                     showingDetail = true
                                 }
+                            } label: {
+                                SubscriptionRow(subscription: subscription)
+                            }
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                            .listRowBackground(Color.clear)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button {
+                                    subscriptionToDelete = subscription
+                                    showingDeleteAlert = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                .tint(.red)
+                            }
                         }
                     }
                     .listStyle(PlainListStyle())
@@ -176,13 +176,19 @@ struct OverviewView: View {
                     }
                 }
             }
+            .onChange(of: showingDetail) { oldValue, newValue in
+                if !newValue {
+                    // 當 sheet 關閉時，清除選中的訂閱
+                    selectedSubscription = nil
+                }
+            }
         }
     }
 }
 
 struct SubscriptionRow: View {
     let subscription: Subscription
-
+    
     var body: some View {
         HStack {
             Image(systemName: subscription.icon)
@@ -190,27 +196,27 @@ struct SubscriptionRow: View {
                 .frame(width: 40, height: 40)
                 .background(Color.purple.opacity(0.3))
                 .cornerRadius(10)
-
+            
             VStack(alignment: .leading) {
                 Text(subscription.name)
                     .font(.headline)
-
+                
                 Text(getDueText(date: subscription.dueDate))
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }
-
+            
             Spacer()
-
+            
             Text("\(Int(subscription.amount)) $")
                 .font(.headline)
         }
         .padding()
         .background(Color.gray.opacity(0.2))
         .cornerRadius(15)
-        .padding(.vertical, 4)  // 加入垂直間距
+        .padding(.vertical, 4)
     }
-
+    
     private func getDueText(date: Date) -> String {
         if Calendar.current.isDateInToday(date) {
             return "DUE TODAY"

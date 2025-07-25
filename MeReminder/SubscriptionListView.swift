@@ -48,53 +48,60 @@ struct SubscriptionListView: View {
             .padding()
             
             // Subscription List
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(filteredServices) { service in
-                        Button {
+            List {
+                ForEach(filteredServices) { service in
+                    Button {
+                        withAnimation {
                             selectedService = service
                             showingDetail = true
-                        } label: {
-                            HStack {
-                                service.icon
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 30, height: 30)
-                                    .foregroundColor(.purple)
-                                
-                                Text(service.name)
-                                    .font(.title3)
-                                    .foregroundColor(.primary)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.gray)
-                            }
-                            .padding()
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(10)
-                            .padding(.horizontal)
                         }
-                        
-                        Divider()
-                            .padding(.horizontal)
+                    } label: {
+                        HStack {
+                            service.icon
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 30, height: 30)
+                                .foregroundColor(.purple)
+                            
+                            Text(service.name)
+                                .font(.title3)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.gray)
+                        }
                     }
+                    .listRowBackground(Color.gray.opacity(0.1))
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
             }
+            .listStyle(PlainListStyle())
+            .scrollContentBackground(.hidden)
         }
         .navigationTitle("Add Subscription")
         .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showingDetail) {
             if let service = selectedService {
                 NavigationStack {
-                    SubscriptionDetailView(service: service, selectedTab: $selectedTab)
+                    SubscriptionDetailView(
+                        service: service,
+                        selectedTab: $selectedTab
+                    )
                 }
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DismissToRoot"))) { _ in
-            showingDetail = false
-            dismiss()
+        .onChange(of: showingDetail) { oldValue, newValue in
+            if !newValue {
+                selectedService = nil
+            }
+        }
+        .onChange(of: selectedTab) { _, newValue in
+            if newValue == 0 {
+                dismiss()
+            }
         }
     }
 } 
+
