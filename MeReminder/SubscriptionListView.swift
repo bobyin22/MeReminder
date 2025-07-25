@@ -102,6 +102,9 @@ struct SubscriptionListView: View {
                 dismiss()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DismissToRoot"))) { _ in
+            dismiss()
+        }
     }
 } 
 

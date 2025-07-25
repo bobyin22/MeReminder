@@ -194,6 +194,8 @@ struct SubscriptionDetailView: View {
             await MainActor.run {
                 // 設置回到 Overview tab
                 selectedTab = 0
+                // 發送通知以關閉所有視圖
+                NotificationCenter.default.post(name: Notification.Name("DismissToRoot"), object: nil)
                 // 關閉當前視圖
                 dismiss()
                 isSaving = false
