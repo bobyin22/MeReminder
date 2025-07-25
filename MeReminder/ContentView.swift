@@ -49,11 +49,13 @@ struct OverviewView: View {
     @State private var currentDate = Date()
     @State private var showingDeleteAlert = false
     @State private var subscriptionToDelete: Subscription?
-
+    @State private var showingDetail = false
+    @State private var selectedSubscription: Subscription?
+    
     var totalAmount: Double {
         subscriptions.reduce(0) { $0 + $1.amount }
     }
-
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -66,18 +68,18 @@ struct OverviewView: View {
                             .padding(.vertical, 8)
                             .background(Color.purple.opacity(0.3))
                             .cornerRadius(20)
-
+                        
                         Spacer()
-
+                        
                         Text("2025")
                             .font(.title2)
                     }
-
+                    
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Total")
                             .font(.title3)
                             .foregroundColor(.gray)
-
+                        
                         Text("\(Int(totalAmount))")
                             .font(.system(size: 50, weight: .bold))
                         + Text(" USD")
@@ -88,14 +90,14 @@ struct OverviewView: View {
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(20)
                 .padding(.horizontal)
-
+                
                 // Upcoming Subscriptions
                 VStack(alignment: .leading) {
                     Text("UPCOMING")
                         .foregroundColor(.gray)
                         .padding(.leading)
                         .padding(.bottom, 5)
-
+                    
                     List {
                         ForEach(subscriptions) { subscription in
                             SubscriptionRow(subscription: subscription)
@@ -111,8 +113,11 @@ struct OverviewView: View {
                                     }
                                     .tint(.red)
                                 }
+                                .onTapGesture {
+                                    selectedSubscription = subscription
+                                    showingDetail = true
+                                }
                         }
-                        .onDelete { _ in }
                     }
                     .listStyle(PlainListStyle())
                     .scrollContentBackground(.hidden)
@@ -128,7 +133,7 @@ struct OverviewView: View {
                             .foregroundColor(.purple)
                     }
                 }
-
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SubscriptionListView(selectedTab: $selectedTab)) {
                         Image(systemName: "plus")
@@ -154,6 +159,21 @@ struct OverviewView: View {
                     Text("確定要刪除 \(subscription.name) 的訂閱嗎？此操作無法復原。")
                 } else {
                     Text("確定要刪除這個訂閱嗎？此操作無法復原。")
+                }
+            }
+            .sheet(isPresented: $showingDetail) {
+                if let subscription = selectedSubscription {
+                    let service = SubscriptionService(
+                        name: subscription.name,
+                        icon: Image(systemName: subscription.icon)
+                    )
+                    NavigationStack {
+                        SubscriptionDetailView(
+                            service: service,
+                            selectedTab: $selectedTab,
+                            existingSubscription: subscription
+                        )
+                    }
                 }
             }
         }

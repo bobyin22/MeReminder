@@ -18,9 +18,24 @@ struct MeReminderApp: App {
             let config = ModelConfiguration("MeReminder", schema: schema)
             container = try ModelContainer(for: schema, configurations: [config])
             
+            // 印出資料庫位置
+            if let url = container.configurations.first?.url {
+                print("📁 Database URL: \(url.path)")
+                print("📁 Database Directory: \(url.deletingLastPathComponent().path)")
+                
+                // 印出更多有用的資訊
+                let fileManager = FileManager.default
+                if let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+                    print("📁 App Support Directory: \(appSupport.path)")
+                }
+                if let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first {
+                    print("📁 Documents Directory: \(documents.path)")
+                }
+            }
+            
             // Add sample data if needed
             if try container.mainContext.fetch(FetchDescriptor<Subscription>()).isEmpty {
-                //addSampleData()
+//                addSampleData()
             }
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")

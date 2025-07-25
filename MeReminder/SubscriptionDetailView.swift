@@ -5,9 +5,11 @@ struct SubscriptionDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.presentationMode) private var presentationMode
-    @Binding var selectedTab: Int  // 新增這行
-
-
+    @Binding var selectedTab: Int
+    
+    // 初始化時的訂閱資料
+    let existingSubscription: Subscription?
+    
     @State private var amount: Double = 0
     @State private var billingDate = Date()
     @State private var endDate: Date?
@@ -16,13 +18,24 @@ struct SubscriptionDetailView: View {
     @State private var category: SubscriptionCategory = .general
     @State private var notification: NotificationFrequency = .never
     
+    init(service: SubscriptionService, selectedTab: Binding<Int>, existingSubscription: Subscription? = nil) {
+        self.service = service
+        self._selectedTab = selectedTab
+        self.existingSubscription = existingSubscription
+        
+        // 預先初始化狀態
+        if let subscription = existingSubscription {
+            _amount = State(initialValue: subscription.amount)
+            _billingDate = State(initialValue: subscription.dueDate)
+            // 其他欄位保持預設值
+        }
+    }
+    
     var body: some View {
         ZStack {
-            //Color.black.ignoresSafeArea()
-            
             ScrollView {
                 VStack(spacing: 24) {
-                    Text("NEW SUBSCRIPTION")
+                    Text(existingSubscription != nil ? "SUBSCRIPTION DETAILS" : "NEW SUBSCRIPTION")
                         .foregroundColor(.gray)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top)
@@ -135,7 +148,7 @@ struct SubscriptionDetailView: View {
                 .padding()
             }
         }
-        .navigationTitle("Add Subscription")
+        .navigationTitle(existingSubscription != nil ? "Edit Subscription" : "Add Subscription")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -145,23 +158,38 @@ struct SubscriptionDetailView: View {
                 .foregroundColor(.purple)
             }
         }
+        .onAppear {
+            // 確保資料載入
+            if let subscription = existingSubscription {
+                DispatchQueue.main.async {
+                    amount = subscription.amount
+                    billingDate = subscription.dueDate
+                }
+            }
+        }
     }
     
     private func saveSubscription() {
-        let newSubscription = Subscription(
-            name: service.name,
-            amount: amount,
-            dueDate: billingDate,
-            icon: category.icon
-        )
-        modelContext.insert(newSubscription)
-        try? modelContext.save()
+        if let existing = existingSubscription {
+            // 更新現有訂閱
+            existing.amount = amount
+            existing.dueDate = billingDate
+            existing.icon = category.icon
+            try? modelContext.save()
+        } else {
+            // 創建新訂閱
+            let newSubscription = Subscription(
+                name: service.name,
+                amount: amount,
+                dueDate: billingDate,
+                icon: category.icon
+            )
+            modelContext.insert(newSubscription)
+            try? modelContext.save()
+        }
         
         // 設置回到 Overview tab
         selectedTab = 0
-        
-        // 發送通知以關閉所有視圖
-        NotificationCenter.default.post(name: Notification.Name("DismissToRoot"), object: nil)
         
         // 關閉當前視圖
         dismiss()
