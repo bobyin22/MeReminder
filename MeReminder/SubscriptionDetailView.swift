@@ -174,7 +174,7 @@ struct SubscriptionDetailView: View {
             // 更新現有訂閱
             existing.amount = amount
             existing.dueDate = billingDate
-            existing.icon = category.icon
+            existing.icon = service.systemName  // 使用服務的系統圖標名稱
             try? modelContext.save()
         } else {
             // 創建新訂閱
@@ -182,7 +182,7 @@ struct SubscriptionDetailView: View {
                 name: service.name,
                 amount: amount,
                 dueDate: billingDate,
-                icon: category.icon
+                icon: service.systemName  // 使用服務的系統圖標名稱
             )
             modelContext.insert(newSubscription)
             try? modelContext.save()

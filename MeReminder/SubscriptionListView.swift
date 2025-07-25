@@ -3,7 +3,11 @@ import SwiftUI
 struct SubscriptionService: Identifiable {
     let id = UUID()
     let name: String
-    let icon: Image
+    let systemName: String
+    
+    var icon: Image {
+        Image(systemName: systemName)
+    }
 }
 
 struct SubscriptionListView: View {
@@ -14,15 +18,15 @@ struct SubscriptionListView: View {
     @State private var selectedService: SubscriptionService?
     
     let subscriptionServices: [SubscriptionService] = [
-        SubscriptionService(name: "1Password", icon: Image(systemName: "lock.fill")),
-        SubscriptionService(name: "Adobe XD", icon: Image(systemName: "paintbrush.fill")),
-        SubscriptionService(name: "Aha", icon: Image(systemName: "video.fill")),
-        SubscriptionService(name: "Airtel", icon: Image(systemName: "antenna.radiowaves.left.and.right")),
-        SubscriptionService(name: "Albert Heijn", icon: Image(systemName: "cart.fill")),
-        SubscriptionService(name: "Amazon", icon: Image(systemName: "cart.fill")),
-        SubscriptionService(name: "Amazon AWS", icon: Image(systemName: "cloud.fill")),
-        SubscriptionService(name: "Amazon Prime", icon: Image(systemName: "play.fill")),
-        SubscriptionService(name: "American Express", icon: Image(systemName: "creditcard.fill"))
+        SubscriptionService(name: "1Password", systemName: "lock.fill"),
+        SubscriptionService(name: "Adobe XD", systemName: "paintbrush.fill"),
+        SubscriptionService(name: "Aha", systemName: "video.fill"),
+        SubscriptionService(name: "Airtel", systemName: "antenna.radiowaves.left.and.right"),
+        SubscriptionService(name: "Albert Heijn", systemName: "cart.fill"),
+        SubscriptionService(name: "Amazon", systemName: "cart.fill"),
+        SubscriptionService(name: "Amazon AWS", systemName: "cloud.fill"),
+        SubscriptionService(name: "Amazon Prime", systemName: "play.fill"),
+        SubscriptionService(name: "American Express", systemName: "creditcard.fill")
     ]
     
     var filteredServices: [SubscriptionService] {

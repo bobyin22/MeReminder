@@ -43,14 +43,26 @@ struct OverviewView: View {
     @Query private var subscriptions: [Subscription]
     @Binding var selectedTab: Int
     @Environment(\.modelContext) private var modelContext
-    @State private var currentDate = Date()
     @State private var showingDeleteAlert = false
     @State private var subscriptionToDelete: Subscription?
     @State private var showingDetail = false
     @State private var selectedSubscription: Subscription?
+    @State private var selectedMonth = Calendar.current.component(.month, from: Date()) - 1 // 0-based index
+    @State private var selectedYear = Calendar.current.component(.year, from: Date())
+    
+    let months = ["January", "February", "March", "April", "May", "June", 
+                 "July", "August", "September", "October", "November", "December"]
+    
+    var years: [Int] {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        return Array(currentYear...currentYear + 5)
+    }
     
     var totalAmount: Double {
-        subscriptions.reduce(0) { $0 + $1.amount }
+        subscriptions.filter { subscription in
+            let components = Calendar.current.dateComponents([.year, .month], from: subscription.dueDate)
+            return components.year == selectedYear && components.month == selectedMonth + 1
+        }.reduce(0) { $0 + $1.amount }
     }
     
     var body: some View {
@@ -59,17 +71,31 @@ struct OverviewView: View {
                 // Overview Card
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
-                        Text("July")
-                            .font(.title2)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 8)
-                            .background(Color.purple.opacity(0.3))
-                            .cornerRadius(20)
+                        // 月份選擇器
+                        Picker("Month", selection: $selectedMonth) {
+                            ForEach(0..<months.count, id: \.self) { index in
+                                Text(months[index])
+                                    .tag(index)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(Color.purple.opacity(0.3))
+                        .cornerRadius(20)
                         
                         Spacer()
                         
-                        Text("2025")
-                            .font(.title2)
+                        // 年份選擇器
+                        Picker("Year", selection: $selectedYear) {
+                            ForEach(years, id: \.self) { year in
+                                Text("\(year)")
+                                    .tag(year)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(.white)
                     }
                     
                     VStack(alignment: .leading, spacing: 5) {
@@ -165,7 +191,7 @@ struct OverviewView: View {
                 if let subscription = selectedSubscription {
                     let service = SubscriptionService(
                         name: subscription.name,
-                        icon: Image(systemName: subscription.icon)
+                        systemName: subscription.icon
                     )
                     NavigationStack {
                         SubscriptionDetailView(
