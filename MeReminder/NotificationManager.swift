@@ -28,8 +28,8 @@ class NotificationManager {
         
         // 設置通知時間為早上7點
         var dateComponents = calendar.dateComponents([.year, .month, .day], from: startDate)
-        dateComponents.hour = 12
-        dateComponents.minute = 43
+        dateComponents.hour = 14
+        dateComponents.minute = 51
 
         // 根據頻率設置通知
         while startDate <= endDate {
@@ -70,8 +70,8 @@ class NotificationManager {
             }
             
             dateComponents = calendar.dateComponents([.year, .month, .day], from: startDate)
-            dateComponents.hour = 7
-            dateComponents.minute = 0
+            dateComponents.hour = 14
+            dateComponents.minute = 51
         }
     }
     
