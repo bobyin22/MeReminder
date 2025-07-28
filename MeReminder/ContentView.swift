@@ -11,7 +11,7 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedTab = 0
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
             OverviewView(selectedTab: $selectedTab)
@@ -20,14 +20,14 @@ struct ContentView: View {
                     Text("Overview")
                 }
                 .tag(0)
-            
+
             Text("Reports")
                 .tabItem {
                     Image(systemName: "chart.pie.fill")
                     Text("Reports")
                 }
                 .tag(1)
-            
+
             Text("Settings")
                 .tabItem {
                     Image(systemName: "gear")
@@ -47,62 +47,60 @@ struct OverviewView: View {
     @State private var subscriptionToDelete: Subscription?
     @State private var showingDetail = false
     @State private var selectedSubscription: Subscription?
-    @State private var selectedMonth = Calendar.current.component(.month, from: Date()) - 1 // 0-based index
-    @State private var selectedYear = Calendar.current.component(.year, from: Date())
-    
-    let months = ["January", "February", "March", "April", "May", "June", 
-                 "July", "August", "September", "October", "November", "December"]
-    
-    var years: [Int] {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        return Array(currentYear...currentYear + 5)
+    @State private var timeSegment = 0 // 0: 月, 1: 年
+
+    var currentMonth: String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM"
+        return dateFormatter.string(from: Date())
     }
-    
+
+    var currentYear: Int {
+        Calendar.current.component(.year, from: Date())
+    }
+
     var totalAmount: Double {
-        subscriptions.filter { subscription in
-            let components = Calendar.current.dateComponents([.year, .month], from: subscription.dueDate)
-            return components.year == selectedYear && components.month == selectedMonth + 1
+        let calendar = Calendar.current
+        let now = Date()
+
+        return subscriptions.filter { subscription in
+            let components = calendar.dateComponents([.year, .month], from: subscription.dueDate)
+            let currentComponents = calendar.dateComponents([.year, .month], from: now)
+
+            if timeSegment == 0 {
+                // 月度總額
+                return components.year == currentComponents.year &&
+                       components.month == currentComponents.month
+            } else {
+                // 年度總額
+                return components.year == currentComponents.year
+            }
         }.reduce(0) { $0 + $1.amount }
     }
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
                 // Overview Card
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
-                        // 月份選擇器
-                        Picker("Month", selection: $selectedMonth) {
-                            ForEach(0..<months.count, id: \.self) { index in
-                                Text(months[index])
-                                    .tag(index)
-                            }
+                        Picker("Time Period", selection: $timeSegment) {
+                            Text(currentMonth)
+                                .tag(0)
+                            Text("\(currentYear)")
+                                .tag(1)
                         }
-                        .pickerStyle(.menu)
-                        .tint(.white)
+                        .pickerStyle(.segmented)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 8)
-                        .background(Color.purple.opacity(0.3))
                         .cornerRadius(20)
-                        
-                        Spacer()
-                        
-                        // 年份選擇器
-                        Picker("Year", selection: $selectedYear) {
-                            ForEach(years, id: \.self) { year in
-                                Text("\(year)")
-                                    .tag(year)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(.white)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Total")
                             .font(.title3)
                             .foregroundColor(.gray)
-                        
+
                         Text("\(Int(totalAmount))")
                             .font(.system(size: 50, weight: .bold))
                         + Text(" USD")
@@ -113,14 +111,14 @@ struct OverviewView: View {
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(20)
                 .padding(.horizontal)
-                
+
                 // Upcoming Subscriptions
                 VStack(alignment: .leading) {
                     Text("UPCOMING")
                         .foregroundColor(.gray)
                         .padding(.leading)
                         .padding(.bottom, 5)
-                    
+
                     List {
                         ForEach(subscriptions) { subscription in
                             Button {
@@ -159,7 +157,7 @@ struct OverviewView: View {
                             .foregroundColor(.purple)
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SubscriptionListView(selectedTab: $selectedTab)) {
                         Image(systemName: "plus")
@@ -214,7 +212,7 @@ struct OverviewView: View {
 
 struct SubscriptionRow: View {
     let subscription: Subscription
-    
+
     var body: some View {
         HStack {
             Image(systemName: subscription.icon)
@@ -222,18 +220,18 @@ struct SubscriptionRow: View {
                 .frame(width: 40, height: 40)
                 .background(Color.purple.opacity(0.3))
                 .cornerRadius(10)
-            
+
             VStack(alignment: .leading) {
                 Text(subscription.name)
                     .font(.headline)
-                
+
                 Text(getDueText(date: subscription.dueDate))
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }
-            
+
             Spacer()
-            
+
             Text("\(Int(subscription.amount)) $")
                 .font(.headline)
         }
@@ -242,7 +240,7 @@ struct SubscriptionRow: View {
         .cornerRadius(15)
         .padding(.vertical, 4)
     }
-    
+
     private func getDueText(date: Date) -> String {
         if Calendar.current.isDateInToday(date) {
             return "DUE TODAY"
