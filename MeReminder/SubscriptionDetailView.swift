@@ -26,7 +26,7 @@ struct SubscriptionDetailView: View {
         // 預先初始化狀態
         if let subscription = existingSubscription {
             _amount = State(initialValue: subscription.amount)
-            _billingDate = State(initialValue: subscription.dueDate)
+            _billingDate = State(initialValue: subscription.billingDate)
             _endDate = State(initialValue: subscription.endDate)
             // 其他欄位保持預設值
         }
@@ -162,7 +162,7 @@ struct SubscriptionDetailView: View {
             // 確保資料載入
             if let subscription = existingSubscription {
                 amount = subscription.amount
-                billingDate = subscription.dueDate
+                billingDate = subscription.billingDate
                 endDate = subscription.endDate
             }
         }
@@ -175,7 +175,7 @@ struct SubscriptionDetailView: View {
         if let existing = existingSubscription {
             // 更新現有訂閱
             existing.amount = amount
-            existing.dueDate = billingDate
+            existing.billingDate = billingDate
             existing.icon = service.systemName  // 使用服務的系統圖標名稱
             existing.endDate = endDate  // 保存結束日期
             try? modelContext.save()
@@ -184,7 +184,7 @@ struct SubscriptionDetailView: View {
             let newSubscription = Subscription(
                 name: service.name,
                 amount: amount,
-                dueDate: billingDate,
+                billingDate: billingDate,
                 icon: service.systemName,  // 使用服務的系統圖標名稱
                 endDate: endDate  // 保存結束日期
             )

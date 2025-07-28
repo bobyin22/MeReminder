@@ -65,7 +65,7 @@ struct OverviewView: View {
         let currentComponents = calendar.dateComponents([.year, .month], from: now)
         
         return subscriptions.reduce(0) { total, subscription in
-            let components = calendar.dateComponents([.year, .month], from: subscription.dueDate)
+            let components = calendar.dateComponents([.year, .month], from: subscription.billingDate)
             
             if timeSegment == 0 {
                 // 月度總額：只計算當月的訂閱
@@ -77,7 +77,7 @@ struct OverviewView: View {
                 // 年度總額：計算該年度內每個訂閱的總金額
                 if components.year == currentComponents.year {
                     // 計算月份差
-                    let startDate = subscription.dueDate
+                    let startDate = subscription.billingDate
                     let endDate = subscription.endDate ?? calendar.date(byAdding: .year, value: 1, to: startDate)!
                     
                     // 如果結束日期在今年之後，只計算到今年年底
@@ -242,7 +242,7 @@ struct SubscriptionRow: View {
                 Text(subscription.name)
                     .font(.headline)
 
-                Text(getDueText(date: subscription.dueDate))
+                Text(getBillingText(date: subscription.billingDate))
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }
@@ -258,7 +258,7 @@ struct SubscriptionRow: View {
         .padding(.vertical, 4)
     }
 
-    private func getDueText(date: Date) -> String {
+    private func getBillingText(date: Date) -> String {
         if Calendar.current.isDateInToday(date) {
             return "DUE TODAY"
         } else if Calendar.current.isDateInTomorrow(date) {

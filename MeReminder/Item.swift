@@ -12,14 +12,14 @@ import SwiftData
 class Subscription {
     var name: String
     var amount: Double
-    var dueDate: Date
+    var billingDate: Date
     var icon: String
     var endDate: Date?  // 可選類型，因為可能沒有結束日期
     
-    init(name: String, amount: Double, dueDate: Date, icon: String, endDate: Date? = nil) {
+    init(name: String, amount: Double, billingDate: Date, icon: String, endDate: Date? = nil) {
         self.name = name
         self.amount = amount
-        self.dueDate = dueDate
+        self.billingDate = billingDate
         self.icon = icon
         self.endDate = endDate
     }
