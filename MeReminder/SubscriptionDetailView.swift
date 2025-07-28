@@ -182,6 +182,9 @@ struct SubscriptionDetailView: View {
             existing.endDate = endDate  // 保存結束日期
             existing.frequency = frequency.rawValue  // 保存頻率
             try? modelContext.save()
+            
+            // 更新通知
+            NotificationManager.shared.scheduleSubscriptionNotifications(for: existing)
         } else {
             // 創建新訂閱
             let newSubscription = Subscription(
@@ -194,6 +197,9 @@ struct SubscriptionDetailView: View {
             )
             modelContext.insert(newSubscription)
             try? modelContext.save()
+            
+            // 設置通知
+            NotificationManager.shared.scheduleSubscriptionNotifications(for: newSubscription)
         }
         
         // 確保數據保存完成

@@ -37,6 +37,9 @@ struct MeReminderApp: App {
             if try container.mainContext.fetch(FetchDescriptor<Subscription>()).isEmpty {
 //                addSampleData()
             }
+            
+            // 請求通知權限
+            NotificationManager.shared.requestAuthorization()
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")
         }
