@@ -58,8 +58,148 @@ struct OverviewView: View {
     var currentYear: Int {
         Calendar.current.component(.year, from: Date())
     }
+    
+    // 計算兩個日期之間的天數（包含起始日和結束日）
+    private func getDaysBetween(start: Date, end: Date) -> Int {
+        let calendar = Calendar.current
+        // 確保我們使用日期的開始時間進行比較
+        let startOfStart = calendar.startOfDay(for: start)
+        let startOfEnd = calendar.startOfDay(for: end)
+        
+        // 使用 range(of: .day, from: startOfStart, to: startOfEnd) 計算天數
+        let range = calendar.dateComponents([.day], from: startOfStart, to: startOfEnd)
+        let days = range.day ?? 0
+        
+        // 加1是因為要包含起始日和結束日
+        let totalDays = days + 1
+        
+        // 調試輸出
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        print("計算天數：")
+        print("開始日期：\(formatter.string(from: start))")
+        print("結束日期：\(formatter.string(from: end))")
+        print("計算得到天數：\(totalDays)")
+        
+        return totalDays
+    }
+    
+    // 根據頻率計算每月金額
+    private func getMonthlyAmount(for subscription: Subscription) -> Double {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentComponents = calendar.dateComponents([.year, .month], from: now)
+        
+        // 取得當月的第一天和最後一天
+        let monthStart = calendar.date(from: DateComponents(year: currentComponents.year, month: currentComponents.month, day: 1))!
+        let monthEnd = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: monthStart)!
+        
+        // 計算實際的開始和結束日期
+        let startDate = max(subscription.billingDate, monthStart)
+        let endDate = subscription.endDate.map { min($0, monthEnd) } ?? monthEnd
+        
+        // 如果開始日期在結束日期之後，表示這個月沒有費用
+        if startDate > endDate {
+            return 0
+        }
+        
+        // 計算這個月內實際的天數
+        let daysInPeriod = getDaysBetween(start: startDate, end: endDate)
+        
+        // 調試輸出
+        print("訂閱詳情：")
+        print("頻率：\(subscription.frequency)")
+        print("金額：\(subscription.amount)")
+        print("計算天數：\(daysInPeriod)")
+        
+        switch subscription.frequency {
+        case "Daily":
+            // 每天收費，直接乘以天數
+            let amount = subscription.amount * Double(daysInPeriod)
+            print("Daily 計算：\(subscription.amount) × \(daysInPeriod) = \(amount)")
+            return amount
+            
+        case "Weekly":
+            // 計算完整的週數（向上取整）
+            let weeks = ceil(Double(daysInPeriod) / 7.0)
+            let amount = subscription.amount * weeks
+            print("Weekly 計算：\(subscription.amount) × \(weeks) = \(amount)")
+            return amount
+            
+        case "Monthly":
+            // 如果是在計費日，收取整月費用
+            if calendar.isDate(subscription.billingDate, equalTo: startDate, toGranularity: .month) {
+                print("Monthly 計算：整月費用 = \(subscription.amount)")
+                return subscription.amount
+            }
+            print("Monthly 計算：非計費月 = 0")
+            return 0
+            
+        case "Yearly":
+            // 如果是在計費日，收取年費的月分攤
+            if calendar.isDate(subscription.billingDate, equalTo: startDate, toGranularity: .month) {
+                let amount = subscription.amount / 12
+                print("Yearly 計算：年費分攤 = \(amount)")
+                return amount
+            }
+            print("Yearly 計算：非計費月 = 0")
+            return 0
+            
+        default:
+            return 0
+        }
+    }
 
-        var totalAmount: Double {
+    // 根據頻率計算年度金額
+    private func getYearlyAmount(for subscription: Subscription, monthCount: Int) -> Double {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentComponents = calendar.dateComponents([.year], from: now)
+        
+        // 取得當年的第一天和最後一天
+        let yearStart = calendar.date(from: DateComponents(year: currentComponents.year, month: 1, day: 1))!
+        let yearEnd = calendar.date(from: DateComponents(year: currentComponents.year, month: 12, day: 31))!
+        
+        // 計算實際的開始和結束日期
+        let startDate = max(subscription.billingDate, yearStart)
+        let endDate = subscription.endDate.map { min($0, yearEnd) } ?? yearEnd
+        
+        // 如果開始日期在結束日期之後，表示這一年沒有費用
+        if startDate > endDate {
+            return 0
+        }
+        
+        // 計算實際的天數
+        let daysInPeriod = getDaysBetween(start: startDate, end: endDate)
+        
+        switch subscription.frequency {
+        case "Daily":
+            // 每天收費，直接乘以天數
+            return subscription.amount * Double(daysInPeriod)
+            
+        case "Weekly":
+            // 計算完整的週數（向上取整）
+            let weeks = ceil(Double(daysInPeriod) / 7.0)
+            return subscription.amount * weeks
+            
+        case "Monthly":
+            // 計算完整的月數（向上取整）
+            let months = ceil(Double(daysInPeriod) / 30.0)
+            return subscription.amount * months
+            
+        case "Yearly":
+            // 如果是在計費年，收取整年費用
+            if calendar.isDate(subscription.billingDate, equalTo: startDate, toGranularity: .year) {
+                return subscription.amount
+            }
+            return 0
+            
+        default:
+            return 0
+        }
+    }
+
+    var totalAmount: Double {
         let calendar = Calendar.current
         let now = Date()
         let currentComponents = calendar.dateComponents([.year, .month], from: now)
@@ -71,7 +211,7 @@ struct OverviewView: View {
                 // 月度總額：只計算當月的訂閱
                 if components.year == currentComponents.year && 
                    components.month == currentComponents.month {
-                    return total + subscription.amount
+                    return total + getMonthlyAmount(for: subscription)
                 }
             } else {
                 // 年度總額：計算該年度內每個訂閱的總金額
@@ -88,7 +228,7 @@ struct OverviewView: View {
                     let monthDiff = calendar.dateComponents([.month], from: startDate, to: effectiveEndDate).month ?? 0
                     let monthCount = monthDiff + 1
                     
-                    return total + (subscription.amount * Double(monthCount))
+                    return total + getYearlyAmount(for: subscription, monthCount: monthCount)
                 }
             }
             return total

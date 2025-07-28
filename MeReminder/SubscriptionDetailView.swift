@@ -28,6 +28,7 @@ struct SubscriptionDetailView: View {
             _amount = State(initialValue: subscription.amount)
             _billingDate = State(initialValue: subscription.billingDate)
             _endDate = State(initialValue: subscription.endDate)
+            _frequency = State(initialValue: SubscriptionFrequency(rawValue: subscription.frequency) ?? .monthly)
             // 其他欄位保持預設值
         }
     }
@@ -164,6 +165,7 @@ struct SubscriptionDetailView: View {
                 amount = subscription.amount
                 billingDate = subscription.billingDate
                 endDate = subscription.endDate
+                frequency = SubscriptionFrequency(rawValue: subscription.frequency) ?? .monthly
             }
         }
     }
@@ -178,6 +180,7 @@ struct SubscriptionDetailView: View {
             existing.billingDate = billingDate
             existing.icon = service.systemName  // 使用服務的系統圖標名稱
             existing.endDate = endDate  // 保存結束日期
+            existing.frequency = frequency.rawValue  // 保存頻率
             try? modelContext.save()
         } else {
             // 創建新訂閱
@@ -186,7 +189,8 @@ struct SubscriptionDetailView: View {
                 amount: amount,
                 billingDate: billingDate,
                 icon: service.systemName,  // 使用服務的系統圖標名稱
-                endDate: endDate  // 保存結束日期
+                endDate: endDate,  // 保存結束日期
+                frequency: frequency.rawValue  // 保存頻率
             )
             modelContext.insert(newSubscription)
             try? modelContext.save()
