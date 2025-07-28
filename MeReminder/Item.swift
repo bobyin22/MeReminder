@@ -14,11 +14,13 @@ class Subscription {
     var amount: Double
     var dueDate: Date
     var icon: String
+    var endDate: Date?  // 可選類型，因為可能沒有結束日期
     
-    init(name: String, amount: Double, dueDate: Date, icon: String) {
+    init(name: String, amount: Double, dueDate: Date, icon: String, endDate: Date? = nil) {
         self.name = name
         self.amount = amount
         self.dueDate = dueDate
         self.icon = icon
+        self.endDate = endDate
     }
 }

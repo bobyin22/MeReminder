@@ -59,23 +59,40 @@ struct OverviewView: View {
         Calendar.current.component(.year, from: Date())
     }
 
-    var totalAmount: Double {
+        var totalAmount: Double {
         let calendar = Calendar.current
         let now = Date()
-
-        return subscriptions.filter { subscription in
+        let currentComponents = calendar.dateComponents([.year, .month], from: now)
+        
+        return subscriptions.reduce(0) { total, subscription in
             let components = calendar.dateComponents([.year, .month], from: subscription.dueDate)
-            let currentComponents = calendar.dateComponents([.year, .month], from: now)
-
+            
             if timeSegment == 0 {
-                // 月度總額
-                return components.year == currentComponents.year &&
-                       components.month == currentComponents.month
+                // 月度總額：只計算當月的訂閱
+                if components.year == currentComponents.year && 
+                   components.month == currentComponents.month {
+                    return total + subscription.amount
+                }
             } else {
-                // 年度總額
-                return components.year == currentComponents.year
+                // 年度總額：計算該年度內每個訂閱的總金額
+                if components.year == currentComponents.year {
+                    // 計算月份差
+                    let startDate = subscription.dueDate
+                    let endDate = subscription.endDate ?? calendar.date(byAdding: .year, value: 1, to: startDate)!
+                    
+                    // 如果結束日期在今年之後，只計算到今年年底
+                    let yearEndDate = calendar.date(from: DateComponents(year: currentComponents.year, month: 12, day: 31))!
+                    let effectiveEndDate = min(endDate, yearEndDate)
+                    
+                    // 計算月份差（包含起始月和結束月）
+                    let monthDiff = calendar.dateComponents([.month], from: startDate, to: effectiveEndDate).month ?? 0
+                    let monthCount = monthDiff + 1
+                    
+                    return total + (subscription.amount * Double(monthCount))
+                }
             }
-        }.reduce(0) { $0 + $1.amount }
+            return total
+        }
     }
 
     var body: some View {
